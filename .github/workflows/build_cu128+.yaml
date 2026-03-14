@@ -79,7 +79,7 @@ jobs:
       - name: Archive wheel
         uses: actions/upload-artifact@v6
         with:
-          name: windows-wheel-${{ matrix.python-version }}-${{ matrix.cuda-version }}
+          name: windows-wheels-${{ matrix.python-version }}-${{ matrix.cuda-version }}
           path: dist/*.whl
   
   build-linux:
@@ -140,7 +140,7 @@ jobs:
       - name: Archive wheels
         uses: actions/upload-artifact@v6
         with:
-          name: linux-all-wheels
+          name: linux-wheels-${{ matrix.python-version }}-${{ matrix.cuda-version }}
           path: dist/*.whl
 
   build-macos:
@@ -181,5 +181,5 @@ jobs:
       - name: Archive wheels
         uses: actions/upload-artifact@v6
         with:
-          name: macos-all-wheels
+          name: macos-wheels-${{ matrix.python-version }}
           path: dist/*.whl
