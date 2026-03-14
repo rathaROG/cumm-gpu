@@ -77,26 +77,10 @@ jobs:
         shell: powershell
 
       - name: Archive wheel
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-wheel-${{ matrix.python-version }}-${{ matrix.cuda-version }}
           path: dist/*.whl
-
-  merge-windows-wheels:
-    runs-on: ubuntu-latest
-    needs: build-windows
-    steps:
-      - name: Gather all wheels
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-wheel-${{ matrix.python-version }}-${{ matrix.cuda-version }}
-          path: all-wheels
-      - name: List wheels
-        run: ls -lR all-wheels
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-all-wheels
-          path: all-wheels/**/*.whl
   
   build-linux:
     runs-on: ubuntu-latest
@@ -154,7 +138,7 @@ jobs:
           docker run --rm -e PLAT=$PLAT -e CUMM_CUDA_VERSION=${{ matrix.cuda-version }} -v `pwd`:/io $DOCKER_IMAGE bash -c "source /etc/bashrc && /io/tools/build-wheels.sh"
 
       - name: Archive wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-all-wheels
           path: dist/*.whl
@@ -195,7 +179,7 @@ jobs:
           python -m build --wheel --outdir dist/ .
 
       - name: Archive wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: macos-all-wheels
           path: dist/*.whl
