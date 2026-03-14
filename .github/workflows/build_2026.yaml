@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'] 
-        cuda-version: ['11.4', '11.8', '12.1', '12.4', '12.6', '12.8', '']
+        cuda-version: ['12.8', '']
     steps:
       - uses: actions/checkout@v5
       - name: Install CUDA
@@ -49,7 +49,6 @@ jobs:
           CUDA_VERSION: ${{ matrix.cuda-version }}
           PYTHON_VERSION: ${{ matrix.python-version }}
           CUMM_CUDA_VERSION: ${{ matrix.cuda-version }}
-          # CUMM_NVRTC_STD: ${{ (matrix.cuda-version != '' && matrix.cuda-version <= '12.6') && 'c++14' || '' }}
         if: |
           (
             (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags')) ) || 
@@ -72,7 +71,7 @@ jobs:
           git clone https://github.com/NVIDIA/cccl.git third_party/cccl -b v$CCCL_BRANCH_NAME
 
           # if we use $env to set a var with empty string, this env will be deteted...
-          # f**k windows
+          # f**k windows x2
           $env:CUMM_CUDA_ARCH_LIST = "all"
           $env:CUMM_DISABLE_JIT = "1"
           pip install pccm pybind11
