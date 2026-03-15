@@ -235,58 +235,68 @@ def _get_cuda_include_lib():
     if _CACHED_CUDA_INCLUDE_LIB is None:
         if compat.InWindows:
             try:
-                nvcc_path = subprocess.check_output(["powershell", "-command", "(Get-Command nvcc).Source"
-                                                    ]).decode("utf-8").strip()
+                nvcc_path = subprocess.check_output(
+                    ["powershell", "-command", "(Get-Command nvcc).Source"]
+                ).decode("utf-8").strip()
                 lib = Path(nvcc_path).parent.parent / "lib"
                 include = Path(nvcc_path).parent.parent / "include"
+                cccl_include = include / "cccl"
+                include_list = [include]
+                if cccl_include.exists():
+                    include_list.append(cccl_include)
                 if lib.exists() and include.exists():
                     if (lib / "cudart.lib").exists() and (include / "cuda.h").exists():
-                        # should be nvidia conda package
                         if (include / "targets" / "x64" / "cuda").exists():
-                            _CACHED_CUDA_INCLUDE_LIB = ([include, include / "targets" / "x64"], lib)
+                            _CACHED_CUDA_INCLUDE_LIB = (include_list + [include / "targets" / "x64"], lib)
                         else:
-                            _CACHED_CUDA_INCLUDE_LIB = ([include], lib)
+                            _CACHED_CUDA_INCLUDE_LIB = (include_list, lib)
                         return _CACHED_CUDA_INCLUDE_LIB
                     elif (lib / "x64" / "cudart.lib").exists() and (include / "cuda.h").exists():
-                        _CACHED_CUDA_INCLUDE_LIB = ([include], lib / "x64")
+                        _CACHED_CUDA_INCLUDE_LIB = (include_list, lib / "x64")
                         return _CACHED_CUDA_INCLUDE_LIB
             except:
-                pass 
-            # failed to get nvcc path, use default cuda path
-            nvcc_version = subprocess.check_output(["nvcc", "--version"
-                                                    ]).decode("utf-8").strip()
+                pass
+            nvcc_version = subprocess.check_output(["nvcc", "--version"]).decode("utf-8").strip()
             nvcc_version_str = nvcc_version.split("\n")[3]
-            version_str: str = re.findall(r"release (\d+.\d+)",
-                                        nvcc_version_str)[0]
-            windows_cuda_root = Path(
-                "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA")
+            version_str: str = re.findall(r"release (\d+.\d+)", nvcc_version_str)[0]
+            windows_cuda_root = Path("C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA")
             if not windows_cuda_root.exists():
                 raise ValueError(f"can't find cuda in {windows_cuda_root}. install via cuda installer or conda first.")
             include = windows_cuda_root / f"v{version_str}\\include"
             lib64 = windows_cuda_root / f"v{version_str}\\lib\\x64"
+            cccl_include = include / "cccl"
+            include_list = [include]
+            if cccl_include.exists():
+                include_list.append(cccl_include)
+            _CACHED_CUDA_INCLUDE_LIB = (include_list, lib64)
+            return _CACHED_CUDA_INCLUDE_LIB
         else:
             try:
-                nvcc_path = subprocess.check_output(["which", "nvcc"
-                                                    ]).decode("utf-8").strip()
+                nvcc_path = subprocess.check_output(["which", "nvcc"]).decode("utf-8").strip()
                 lib = Path(nvcc_path).parent.parent / "lib"
                 include = Path(nvcc_path).parent.parent / "targets/x86_64-linux/include"
+                cccl_include = include / "cccl"
+                include_list = [include]
+                if cccl_include.exists():
+                    include_list.append(cccl_include)
                 if lib.exists() and include.exists():
                     if (lib / "libcudart.so").exists() and (include / "cuda.h").exists():
-                        # should be nvidia conda package
-                        _CACHED_CUDA_INCLUDE_LIB = ([include], lib)
+                        _CACHED_CUDA_INCLUDE_LIB = (include_list, lib)
                         return _CACHED_CUDA_INCLUDE_LIB
             except:
-                pass 
-
+                pass
             linux_cuda_root = Path("/usr/local/cuda")
             include = linux_cuda_root / f"include"
             lib64 = linux_cuda_root / f"lib64"
+            cccl_include = include / "cccl"
+            include_list = [include]
+            if cccl_include.exists():
+                include_list.append(cccl_include)
             assert linux_cuda_root.exists(), f"can't find cuda in {linux_cuda_root} install via cuda installer or conda first."
-        _CACHED_CUDA_INCLUDE_LIB = ([include], lib64)
-        return _CACHED_CUDA_INCLUDE_LIB
+            _CACHED_CUDA_INCLUDE_LIB = (include_list, lib64)
+            return _CACHED_CUDA_INCLUDE_LIB
     else:
         return _CACHED_CUDA_INCLUDE_LIB
-
 
 class GemmKernelFlags(pccm.Class):
     """gemm support nvrtc, so we use less flags here.
