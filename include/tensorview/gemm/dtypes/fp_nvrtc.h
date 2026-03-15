@@ -11,25 +11,31 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once 
+#pragma once
 namespace tv {
-enum  {
-    FP_NAN =
-# define FP_NAN 0
-      FP_NAN,
-    FP_INFINITE =
-# define FP_INFINITE 1
-      FP_INFINITE,
-    FP_ZERO =
-# define FP_ZERO 2
-      FP_ZERO,
-    FP_SUBNORMAL =
-# define FP_SUBNORMAL 3
-      FP_SUBNORMAL,
-    FP_NORMAL =
-# define FP_NORMAL 4
-      FP_NORMAL
+
+#ifdef FP_NAN
+#undef FP_NAN
+#endif
+#ifdef FP_INFINITE
+#undef FP_INFINITE
+#endif
+#ifdef FP_ZERO
+#undef FP_ZERO
+#endif
+#ifdef FP_SUBNORMAL
+#undef FP_SUBNORMAL
+#endif
+#ifdef FP_NORMAL
+#undef FP_NORMAL
+#endif
+
+enum FPClass {
+    FP_NAN        = 0,
+    FP_INFINITE   = 1,
+    FP_ZERO       = 2,
+    FP_SUBNORMAL  = 3,
+    FP_NORMAL     = 4
 };
 
-}
-
+} // namespace tv
