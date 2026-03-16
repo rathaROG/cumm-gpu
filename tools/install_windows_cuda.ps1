@@ -4,22 +4,6 @@
 
 # Dictionary of known cuda versions and thier download URLS, which do not follow a consistent pattern :(
 $CUDA_KNOWN_URLS = @{
-    "10.2" = "http://developer.download.nvidia.com/compute/cuda/10.2/Prod/network_installers/cuda_10.2.89_win10_network.exe";
-    "11.0" = "http://developer.download.nvidia.com/compute/cuda/11.0.3/network_installers/cuda_11.0.3_win10_network.exe";
-    "11.1" = "https://developer.download.nvidia.com/compute/cuda/11.1.1/network_installers/cuda_11.1.1_win10_network.exe";
-    "11.2" = "https://developer.download.nvidia.com/compute/cuda/11.2.2/network_installers/cuda_11.2.2_win10_network.exe";
-    "11.3" = "https://developer.download.nvidia.com/compute/cuda/11.3.1/network_installers/cuda_11.3.1_win10_network.exe";
-    "11.4" = "https://developer.download.nvidia.com/compute/cuda/11.4.2/network_installers/cuda_11.4.2_win10_network.exe";
-    "11.6" = "https://developer.download.nvidia.com/compute/cuda/11.6.2/network_installers/cuda_11.6.2_windows_network.exe";
-    "11.7" = "https://developer.download.nvidia.com/compute/cuda/11.7.1/network_installers/cuda_11.7.1_windows_network.exe";
-    "11.8" = "https://developer.download.nvidia.com/compute/cuda/11.8.0/network_installers/cuda_11.8.0_windows_network.exe";
-    "12.0" = "https://developer.download.nvidia.com/compute/cuda/12.0.1/network_installers/cuda_12.0.1_windows_network.exe";
-    "12.1" = "https://developer.download.nvidia.com/compute/cuda/12.1.1/network_installers/cuda_12.1.1_windows_network.exe";
-    "12.2" = "https://developer.download.nvidia.com/compute/cuda/12.2.2/network_installers/cuda_12.2.2_windows_network.exe";
-    "12.3" = "https://developer.download.nvidia.com/compute/cuda/12.3.2/network_installers/cuda_12.3.2_windows_network.exe";
-    "12.4" = "https://developer.download.nvidia.com/compute/cuda/12.4.1/network_installers/cuda_12.4.1_windows_network.exe";
-    "12.5" = "https://developer.download.nvidia.com/compute/cuda/12.5.1/network_installers/cuda_12.5.1_windows_network.exe";
-    "12.6" = "https://developer.download.nvidia.com/compute/cuda/12.6.3/network_installers/cuda_12.6.3_windows_network.exe";
     "12.8" = "https://developer.download.nvidia.com/compute/cuda/12.8.1/network_installers/cuda_12.8.1_windows_network.exe";
     "13.0" = "https://developer.download.nvidia.com/compute/cuda/13.0.2/network_installers/cuda_13.0.2_windows_network.exe";
 }
@@ -38,40 +22,37 @@ $CUDA_KNOWN_URLS = @{
 ## Select CUDA version
 ## -------------------
 
-# Get the cuda version from the environment as env:cuda.
+# Get the cuda version from the environment as env:cuda
 $CUDA_VERSION_FULL = $env:cuda
-# Make sure CUDA_VERSION_FULL is set and valid, otherwise error.
-
-if (($CUDA_VERSION_FULL -eq "10.2") -or ($CUDA_VERSION_FULL -eq "11.0") -or ($CUDA_VERSION_FULL -eq "11.1") -or ($CUDA_VERSION_FULL -eq "11.2") -or ($CUDA_VERSION_FULL -eq "11.3")){
-    $CUDA_PACKAGES_IN = @(
-        "nvcc";
-        "visual_studio_integration";
-        "curand_dev";
-        "nvrtc_dev";
-        "cudart";
-    )
-} else {
-    # after cuda 11.4
-    $CUDA_PACKAGES_IN = @(
-        "nvcc";
-        "visual_studio_integration";
-        "curand_dev";
-        "nvrtc_dev";
-        "cudart";
-        "cuxxfilt";
-        # we need this to get libcu++ headers in cuda 12.0.
-        "thrust";
-    )
-}
 
 # Validate CUDA version, extracting components via regex
 $cuda_ver_matched = $CUDA_VERSION_FULL -match "^(?<major>[1-9][0-9]*)\.(?<minor>[0-9]+)$"
-if(-not $cuda_ver_matched){
+if (-not $cuda_ver_matched) {
     Write-Output "Invalid CUDA version specified, <major>.<minor> required. '$CUDA_VERSION_FULL'."
     exit 1
 }
 $CUDA_MAJOR=$Matches.major
 $CUDA_MINOR=$Matches.minor
+
+# Base components for CUDA 12+
+$CUDA_PACKAGES_IN = @(
+    "nvcc";
+    "visual_studio_integration";
+    "curand_dev";
+    "nvrtc_dev";
+    "cudart";
+    "cuxxfilt";
+    "thrust";
+)
+
+# Additional components for CUDA 13+
+if ([int]$CUDA_MAJOR -ge 13) {
+    $CUDA_PACKAGES_IN += @(
+        "crt";
+        "nvvm";
+        "nvptxcompiler"
+    )
+}
 
 ## ------------------------------------------------
 ## Select CUDA packages to install from environment
@@ -88,30 +69,30 @@ $CUDA_PACKAGES = ""
 
 Foreach ($package in $CUDA_PACKAGES_IN) {
     # Make sure the correct package name is used for nvcc.
-    if($package -eq "nvcc" -and [version]$CUDA_VERSION_FULL -lt [version]"9.1"){
+    if ($package -eq "nvcc" -and [version]$CUDA_VERSION_FULL -lt [version]"9.1") {
         $package="compiler"
-    } elseif($package -eq "compiler" -and [version]$CUDA_VERSION_FULL -ge [version]"9.1") {
+    } elseif ($package -eq "compiler" -and [version]$CUDA_VERSION_FULL -ge [version]"9.1") {
         $package="nvcc"
     }
     $CUDA_PACKAGES += " $($package)_$($CUDA_MAJOR).$($CUDA_MINOR)"
 
 }
 echo "$($CUDA_PACKAGES)"
+
 ## -----------------
 ## Prepare download
 ## -----------------
 
 # Select the download link if known, otherwise have a guess.
-$CUDA_REPO_PKG_REMOTE=""
-if($CUDA_KNOWN_URLS.containsKey($CUDA_VERSION_FULL)){
+$CUDA_REPO_PKG_REMOTE = ""
+if ($CUDA_KNOWN_URLS.containsKey($CUDA_VERSION_FULL)) {
     $CUDA_REPO_PKG_REMOTE=$CUDA_KNOWN_URLS[$CUDA_VERSION_FULL]
-} else{
+} else {
     # Guess what the url is given the most recent pattern (at the time of writing, 10.1)
     Write-Output "note: URL for CUDA ${$CUDA_VERSION_FULL} not known, estimating."
     $CUDA_REPO_PKG_REMOTE="http://developer.download.nvidia.com/compute/cuda/$($CUDA_MAJOR).$($CUDA_MINOR)/Prod/network_installers/cuda_$($CUDA_VERSION_FULL)_win10_network.exe"
 }
 $CUDA_REPO_PKG_LOCAL="cuda_$($CUDA_VERSION_FULL)_win10_network.exe"
-
 
 ## ------------
 ## Install CUDA
@@ -120,7 +101,7 @@ $CUDA_REPO_PKG_LOCAL="cuda_$($CUDA_VERSION_FULL)_win10_network.exe"
 # Get CUDA network installer
 Write-Output "Downloading CUDA Network Installer for $($CUDA_VERSION_FULL) from: $($CUDA_REPO_PKG_REMOTE)"
 Invoke-WebRequest $CUDA_REPO_PKG_REMOTE -OutFile $CUDA_REPO_PKG_LOCAL | Out-Null
-if(Test-Path -Path $CUDA_REPO_PKG_LOCAL){
+if (Test-Path -Path $CUDA_REPO_PKG_LOCAL) {
     Write-Output "Downloading Complete"
 } else {
     Write-Output "Error: Failed to download $($CUDA_REPO_PKG_LOCAL) from $($CUDA_REPO_PKG_REMOTE)"
@@ -149,7 +130,6 @@ Write-Output "CUDA_PATH_VX_Y $($CUDA_PATH_VX_Y)"
 # PATH needs updating elsewhere, anything in here won't persist.
 # Append $CUDA_PATH/bin to path.
 # Set CUDA_PATH as an environmental variable
-
 
 # If executing on github actions, emit the appropriate echo statements to update environment variables
 if (Test-Path "env:GITHUB_ACTIONS") { 
