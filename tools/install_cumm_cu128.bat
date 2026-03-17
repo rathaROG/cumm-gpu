@@ -6,7 +6,7 @@ SET "PYTHONWARNINGS=ignore"
 RMDIR /s /q cumm-gpu >NUL 2>&1
 ECHO.
 ECHO [----------------------------------------------------------------------------------]
-ECHO [                  Install CUMM (CUDA 12.8) by rathaROG - v0.0.1                   ]
+ECHO [                  Install CUMM (CUDA 12.8) by rathaROG - v0.0.2                   ]
 ECHO [----------------------------------------------------------------------------------]
 ECHO.
 ECHO 🚨 You must manually install Microsoft Visual Studio 2019+ with C++ !
@@ -33,7 +33,7 @@ ECHO [INFO] Cloning cumm-gpu repo ...
 git clone https://github.com/rathaROG/cumm-gpu.git >NUL 2>&1
 CD cumm-gpu
 SET CUMM_CUDA_VERSION=12.8
-SET CUMM_CUDA_ARCH_LIST=8.6;8.9;12.0
+SET CUMM_CUDA_ARCH_LIST=all
 SET CUMM_DISABLE_JIT=1
 SET CUMM_NVRTC_STD=c++17
 ECHO [INFO] Activating MSVC environment for cumm ...
