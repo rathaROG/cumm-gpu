@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Modified by rathaROG in 2026.
+
 # Note: To use the 'upload' functionality of this file, you must:
 #   $ pip install twine
 

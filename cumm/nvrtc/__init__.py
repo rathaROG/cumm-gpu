@@ -1,3 +1,5 @@
+# Modified by rathaROG in 2026.
+
 import os
 import dataclasses
 from pathlib import Path

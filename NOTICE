@@ -1,0 +1,31 @@
+Many files (including Python and non-Python files) have been added or modified by rathaROG in 2026.
+
+To see a full list of added and modified files, run in the git repository:
+    git diff --name-status 4c77b38d1ab57d5d1c157adddf67dad93f3a446b
+
+    (START)
+    A       .github/docker/Dockerfile.manylinux_2_28_cu130
+    D       .github/workflows/build.yaml
+    A       .github/workflows/build_cu128+.yaml
+    D       CHANGELOG.md
+    D       CMakeLists.txt
+    M       LICENSE
+    A       NOTICE
+    M       README.md
+    D       cmake/cummConfig.cmake.in
+    M       cumm/common.py
+    M       cumm/nvrtc/__init__.py
+    D       format_all.sh
+    M       include/tensorview/core/nvrtc_std.h
+    M       include/tensorview/gemm/dtypes/fp_nvrtc.h
+    M       setup.py
+    M       tools/build-wheels.sh
+    A       tools/install_cumm_cu128.bat
+    A       tools/install_cumm_cu130.bat
+    M       tools/install_windows_cuda.ps1
+    A       tools/msvc_setup.bat
+    M       version.txt
+    (END)
+
+For more information on the changes, contact:
+    - rathaROG (https://github.com/rathaROG)
