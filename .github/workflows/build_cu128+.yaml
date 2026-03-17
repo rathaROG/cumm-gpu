@@ -71,7 +71,7 @@ jobs:
           python -m build --wheel --outdir dist/ .
         shell: powershell
       - name: Archive wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: windows-wheels-${{ matrix.python-version }}-${{ matrix.cuda-version }}
           path: dist/*.whl
@@ -146,7 +146,7 @@ jobs:
             $DOCKER_IMAGE \
             bash -c "source /etc/bashrc && /io/tools/build-wheels.sh"
       - name: Archive wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: linux-wheels-${{ matrix.python-version }}-${{ matrix.cuda-version }}
           path: dist/*.whl
@@ -214,7 +214,7 @@ jobs:
           # python -m pip install myclang -f ./dist
           # pytest ./test
       - name: Archive wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: linux-wheels-cu${{ matrix.cuda-version }}
           path: dist/*.whl
@@ -265,7 +265,7 @@ jobs:
           pip install delocate
           delocate-wheel dist/*.whl
       - name: Archive wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: macos-arm-wheels-${{ matrix.python-version }}
           path: dist/*.whl
@@ -316,7 +316,7 @@ jobs:
   #         pip install delocate
   #         delocate-wheel dist/*.whl
   #     - name: Archive wheels
-  #       uses: actions/upload-artifact@v6
+  #       uses: actions/upload-artifact@v7
   #       with:
   #         name: macos-intel-wheels-${{ matrix.python-version }}
   #         path: dist/*.whl
