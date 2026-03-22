@@ -19,6 +19,8 @@ import importlib.util
 import os
 import re
 import subprocess
+import nvidia_arch as na
+
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -56,6 +58,7 @@ _GPU_NAME_TO_ARCH = {
     r"(NVIDIA )?TITAN V": "70",
     r"(NVIDIA )?TITAN Xp": "60",
     r"(NVIDIA )?TITAN X": "52",
+    r"(NVIDIA )?GeForce RTX 50[0-9]0( Ti)?": "120",
     r"(NVIDIA )?GeForce RTX 40[0-9]0( Ti)?": "89",
     r"(NVIDIA )?GeForce RTX 30[0-9]0( Ti)?": "86",
     r"(NVIDIA )?GeForce RTX 20[0-9]0( Ti)?": "75",
@@ -89,16 +92,8 @@ def _get_cuda_arch_flags(is_gemm: bool = False) -> Tuple[List[str], List[Tuple[i
         ('Ampere', '8.0;8.6+PTX'),
         ('Hopper', '9.0+PTX'),
         ('Lovelace', '8.9+PTX'),
+        ('Blackwell', '12.0+PTX'),
     ])
-
-    supported_arches = [
-        '3.5', '3.7', '5.0', '5.2', '6.0', '6.1', '7.0', '7.2', '7.5', '8.0',
-        '8.6', '8.9', '9.0', "10.0", "12.0",
-    ]
-    supported_arches += ['5.3', '6.2', '7.2', '8.7']
-    valid_arch_strings = supported_arches + [
-        s + "+PTX" for s in supported_arches
-    ]
 
     # The default is sm_30 for CUDA 9.x and 10.x
     # First check for an env var (same as used by the main setup.py)
@@ -106,8 +101,7 @@ def _get_cuda_arch_flags(is_gemm: bool = False) -> Tuple[List[str], List[Tuple[i
     # See cmake/Modules_CUDA_fix/upstream/FindCUDA/select_compute_arch.cmake
     _arch_list = os.getenv('CUMM_CUDA_ARCH_LIST', None)
     _cuda_version = os.getenv('CUMM_CUDA_VERSION', None)
-    _enable_cross_compile_aarch64 = os.getenv('CUMM_CROSS_COMPILE_TARGET',
-                                              None) == "aarch64"
+    _enable_cross_compile_aarch64 = os.getenv('CUMM_CROSS_COMPILE_TARGET', None) == "aarch64"
 
     if _arch_list is not None and _arch_list.lower() == "all":
         msg = ("you must provide CUDA version by CUMM_CUDA_VERSION, "
@@ -139,7 +133,9 @@ def _get_cuda_arch_flags(is_gemm: bool = False) -> Tuple[List[str], List[Tuple[i
                 else:
                     # remove sm < 70 prebuilt gemm kernels in CUDA 12.
                     # these gemm kernels will be compiled via nvrtc.
-                    _arch_list = "7.5;8.0;8.6;8.9;9.0;10.0;12.0+PTX"
+                    # _arch_list = "7.5;8.0;8.6;8.9;9.0;10.0;12.0+PTX"
+                    _arch_list = na.get_architectures(gpu_type="all", cuda_ver=f"{major}.{minor}", 
+                                                      min_sm=75, return_mode='cc_string', add_ptx=True)
             else:
                 # flag for non-gemm kernels, they are usually simple and small.
                 if (major, minor) < (11, 0):
@@ -149,78 +145,34 @@ def _get_cuda_arch_flags(is_gemm: bool = False) -> Tuple[List[str], List[Tuple[i
                 elif (major, minor) < (12, 8):
                     _arch_list = "5.0;5.2;6.0;6.1;7.0;7.5;8.0;8.6;8.9;9.0+PTX"
                 else:
-                    _arch_list = "7.5;8.0;8.6;8.9;9.0;10.0;12.0+PTX"
-    _all_arch = "5.2;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
-    for named_arch, archval in named_arches.items():
-        _all_arch = _all_arch.replace(named_arch, archval)
-    _all_arch_list = _all_arch.split(';')
+                    # _arch_list = "7.5;8.0;8.6;8.9;9.0;10.0;12.0+PTX"
+                    _arch_list = na.get_architectures(gpu_type="all", cuda_ver=f"{major}.{minor}", 
+                                                      min_sm=75, return_mode='cc_string', add_ptx=True)
 
-    # If not given, determine what's best for the GPU / CUDA version that can be found
-    if not _arch_list:
-        arch_list = []
-        # the assumption is that the extension should run on any of the currently visible cards,
-        # which could be of different types - therefore all archs for visible cards should be included
-        gpu_names = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=name",
-             "--format=csv,noheader"]).decode("utf-8")
-        gpu_names = gpu_names.strip()
-        gpu_names = gpu_names.split("\n")
-        arch_found = True
-        for i in range(len(gpu_names)):
-            capability = ""
-            for reg, sm in _GPU_NAME_TO_ARCH.items():
-                # print(reg, gpu_names[i])
-                if re.match(reg, gpu_names[i]):
-                    capability = sm
-            if capability == "":
-                arch_list = _all_arch_list
-                arch_found = False
-                break
-            capability_int = int(capability)
-            major = capability_int // 10
-            minor = capability_int % 10
-            arch = f'{major}.{minor}'
-            if arch not in arch_list:
-                arch_list.append(arch)
-        if arch_found:
-            arch_list = sorted(arch_list)
-            arch_list[-1] += '+PTX'
+    arch_list = _arch_list if _arch_list else na.get_compute_cap(return_mode='cc_string', add_ptx=True)
+    if arch_list and isinstance(arch_list, str):
+        arch_list = na.validate_cc_string(arch_list)
     else:
-        # Deal with lists that are ' ' separated (only deal with ';' after)
-        _arch_list = _arch_list.replace(' ', ';')
-        # Expand named arches
-        for named_arch, archval in named_arches.items():
-            _arch_list = _arch_list.replace(named_arch, archval)
-
-        arch_list = _arch_list.split(';')
-    flags = []
-    nums: List[Tuple[int, int]] = []
-    if not arch_list:
         raise ValueError(
-            "can't find arch or can't recogize your GPU. "
+            "invalid arch list: {} "
             "use env CUMM_CUDA_ARCH_LIST to specify your gpu arch. "
-            "for example, export CUMM_CUDA_ARCH_LIST=\"8.0;8.6+PTX\"")
+            "for example, export CUMM_CUDA_ARCH_LIST=\"8.0;8.6+PTX\"".format(arch_list))
+
+    nums: List[Tuple[int, int]] = []
     have_ptx = False
     for arch in arch_list:
         if arch.endswith("+PTX"):
             arch_vers = arch.split("+")[0].split(".")
         else:
             arch_vers = arch.split(".")
-        if arch not in valid_arch_strings:
-            raise ValueError(
-                f"Unknown CUDA arch ({arch}) or GPU not supported")
-        else:
-            num = arch_vers[0] + arch_vers[1]
-            nums.append((int(arch_vers[0]), int(arch_vers[1])))
-            if arch.endswith('+PTX'):
-                have_ptx = True
-                flags.append(f'-gencode=arch=compute_{num},code=[sm_{num},compute_{num}]')
-            else:
-                flags.append(f'-gencode=arch=compute_{num},code=sm_{num}')
+        num = arch_vers[0] + arch_vers[1]
+        nums.append((int(arch_vers[0]), int(arch_vers[1])))
+        if arch.endswith('+PTX'):
+            have_ptx = True
 
-                # flags.append(f'-gencode=arch=compute_{num},code=compute_{num}')
+    flags = na.make_gencode_flags(arch_list, verify_arch=True)
 
-    return sorted(list(set(flags))), nums, have_ptx
+    return flags, nums, have_ptx
 
 def get_cuda_version_by_nvcc():
     nvcc_version = subprocess.check_output(["nvcc", "--version"
