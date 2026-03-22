@@ -158,6 +158,9 @@ def _get_cuda_arch_flags(is_gemm: bool = False) -> Tuple[List[str], List[Tuple[i
             "use env CUMM_CUDA_ARCH_LIST to specify your gpu arch. "
             "for example, export CUMM_CUDA_ARCH_LIST=\"8.0;8.6+PTX\"".format(arch_list))
 
+    arch_list = [arch.strip() for arch in arch_list.split(";") if arch.strip()]
+    print(f"gpu arch list: {arch_list}")
+
     nums: List[Tuple[int, int]] = []
     have_ptx = False
     for arch in arch_list:
