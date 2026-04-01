@@ -1,1 +1,18 @@
+# Include top-level docs and license
+include *.in
+include *.cff
+include *.md
+include version.txt
+include LICENSE
+include NOTICE
+
+# Include PYI
 include cumm/tensorview_bind_anno.pyi
+
+# Exclude Python cache files everywhere
+global-exclude __pycache__/
+global-exclude *.pyc
+
+# Remove development-only directories
+prune .github
+prune .vscode

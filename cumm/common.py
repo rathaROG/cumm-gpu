@@ -134,15 +134,15 @@ def _get_cuda_arch_flags(is_gemm: bool = False) -> Tuple[List[str], List[Tuple[i
 
             if is_gemm:
                 # auto detect with min_sm, for cons+jets
-                _arch_list = na.get_architectures(gpu_type="cons+jets", min_sm=min_sm, return_mode='cc_string', add_ptx=True)
+                _arch_list = na.get_arches(gpu_type="cons+jets", min_sm=min_sm, return_mode='cc_string', add_ptx=True)
             else:
                 # flag for non-gemm kernels, they are usually simple and small
                 # auto detect with min_sm, for all
-                _arch_list = na.get_architectures(gpu_type="all", min_sm=min_sm, return_mode='cc_string', add_ptx=True)
+                _arch_list = na.get_arches(gpu_type="all", min_sm=min_sm, return_mode='cc_string', add_ptx=True)
 
-    arch_list = _arch_list if _arch_list else na.get_compute_cap(return_mode='cc_string', add_ptx=True)
+    arch_list = _arch_list if _arch_list else na.get_compute_caps(return_mode='cc_string', add_ptx=True)
     if arch_list and isinstance(arch_list, str):
-        arch_list = na.validate_cc_string(arch_list)
+        arch_list = na.validate_arch_string(arch_list)
     else:
         raise ValueError(
             "invalid arch list: {} "

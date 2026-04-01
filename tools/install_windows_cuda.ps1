@@ -1,9 +1,12 @@
+# Modified by rathaROG in 2026.
+
 ## -------------------
 ## Constants
 ## -------------------
 
 # Dictionary of known cuda versions and thier download URLS, which do not follow a consistent pattern :(
 $CUDA_KNOWN_URLS = @{
+    "12.6" = "https://developer.download.nvidia.com/compute/cuda/12.6.3/network_installers/cuda_12.6.3_windows_network.exe";
     "12.8" = "https://developer.download.nvidia.com/compute/cuda/12.8.1/network_installers/cuda_12.8.1_windows_network.exe";
     "13.0" = "https://developer.download.nvidia.com/compute/cuda/13.0.2/network_installers/cuda_13.0.2_windows_network.exe";
 }
@@ -34,18 +37,24 @@ if (-not $cuda_ver_matched) {
 $CUDA_MAJOR=$Matches.major
 $CUDA_MINOR=$Matches.minor
 
-# Base components for CUDA 12+
+# Base components for CUDA
 $CUDA_PACKAGES_IN = @(
     "nvcc";
     "visual_studio_integration";
     "curand_dev";
     "nvrtc_dev";
     "cudart";
-    "cuxxfilt";
-    "thrust";
 )
 
-# Additional components for CUDA 13+
+# Additional components for CUDA 11.4 and later
+if ((([int]$CUDA_MAJOR -eq 11) -and ([int]$CUDA_MINOR -ge 4)) -or ([int]$CUDA_MAJOR -ge 12)) {
+    $CUDA_PACKAGES_IN += @(
+        "cuxxfilt";
+        "thrust";
+    )
+}
+
+# Additional components for CUDA 13.0 and later
 if ([int]$CUDA_MAJOR -ge 13) {
     $CUDA_PACKAGES_IN += @(
         "crt";
@@ -77,7 +86,7 @@ Foreach ($package in $CUDA_PACKAGES_IN) {
     $CUDA_PACKAGES += " $($package)_$($CUDA_MAJOR).$($CUDA_MINOR)"
 
 }
-echo "$($CUDA_PACKAGES)"
+Write-Output "$($CUDA_PACKAGES)"
 
 ## -----------------
 ## Prepare download
@@ -134,8 +143,8 @@ Write-Output "CUDA_PATH_VX_Y $($CUDA_PATH_VX_Y)"
 # If executing on github actions, emit the appropriate echo statements to update environment variables
 if (Test-Path "env:GITHUB_ACTIONS") { 
     # Set paths for subsequent steps, using $env:CUDA_PATH
-    echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
-    echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-    echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-    echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    Write-Output "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+    Write-Output "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+    Write-Output "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+    Write-Output "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 }

@@ -19,12 +19,15 @@ from ccimport import compat
 from pccm.extension import ExtCallback, PCCMBuild, PCCMExtension
 from setuptools import Command, find_packages, setup
 from setuptools.extension import Extension
+from nvidia_arch import normalize_cuda_ver
 
 NAME = 'cumm'
 RELEASE_NAME = NAME
-cuda_ver = os.getenv("CUMM_CUDA_VERSION", None)
+
+cuda_ver = normalize_cuda_ver(os.getenv("CUMM_CUDA_VERSION", None))
 if cuda_ver is not None and cuda_ver != "":
     cuda_ver = cuda_ver.replace(".", "")
+    cuda_ver = cuda_ver[:3]
     RELEASE_NAME += "-cu{}".format(cuda_ver)
 
 DESCRIPTION = 'CUDA matrix multiply library'
@@ -34,7 +37,7 @@ REQUIRES_PYTHON = '>=3.11'
 VERSION = None
 
 REQUIRED = [
-    "nvidia-arch>=5.0.0",
+    "nvidia-arch>=7.1.0",
     "pccm>=0.4.15",
     "pybind11>=2.6.0",
     "fire",
@@ -111,8 +114,7 @@ class UploadCommand(Command):
         sys.exit()
 
 class CopyHeaderCallback(ExtCallback):
-    def __call__(self, ext: Extension, package_dir: Path,
-                 built_target_path: Path):
+    def __call__(self, ext: Extension, package_dir: Path, built_target_path: Path):
         include_path = package_dir / "cumm" / "include"
         target_lib_path = package_dir / "cumm" / "lib"
         target_nvrtc_include_path = package_dir / "cumm" / "nvrtc_include"
@@ -153,15 +155,14 @@ if disable_jit is not None and disable_jit == "1":
     from cumm.csrc.arrayref import ArrayPtr
     from cumm.tensorview_bind import TensorViewBind, AppleMetalImpl
     cus = [ArrayPtr(), TensorViewBind(), AppleMetalImpl()]
-
-    if cuda_ver is None or (cuda_ver is not None and cuda_ver != ""):
-        pass
     ext_modules: List[Extension] = [
-        PCCMExtension(cus,
-                      "cumm/core_cc",
-                      Path(__file__).resolve().parent / "cumm",
-                      extcallback=CopyHeaderCallback(),
-                      std="c++17" if compat.InMacOS else "c++14",)
+        PCCMExtension(
+            cus,
+            "cumm/core_cc",
+            Path(__file__).resolve().parent / "cumm",
+            extcallback=CopyHeaderCallback(),
+            std="c++17" if compat.InMacOS else "c++14",
+        )
     ]
 else:
     cmdclass = {'upload': UploadCommand,}
@@ -194,7 +195,6 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy'
     ],
-    # $ setup.py publish support.
     cmdclass=cmdclass,
     ext_modules=ext_modules,
 )

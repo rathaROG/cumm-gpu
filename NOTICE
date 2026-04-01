@@ -4,12 +4,14 @@ To see a full list of added and modified files, run in the git repository:
     git diff --name-status 4c77b38d1ab57d5d1c157adddf67dad93f3a446b
 
     (START)
-    A       .github/docker/Dockerfile.manylinux_2_28_cu130
     D       .github/workflows/build.yaml
-    A       .github/workflows/build_cu128+.yaml
+    A       .github/workflows/build_legacy.yaml
+    A       .github/workflows/build_main.yaml
     D       CHANGELOG.md
+    A       CITATION.cff
     D       CMakeLists.txt
     M       LICENSE
+    M       MANIFEST.in
     A       NOTICE
     M       README.md
     D       cmake/cummConfig.cmake.in
@@ -18,11 +20,15 @@ To see a full list of added and modified files, run in the git repository:
     D       format_all.sh
     M       include/tensorview/core/nvrtc_std.h
     M       include/tensorview/gemm/dtypes/fp_nvrtc.h
+    M       pyproject.toml
     M       setup.py
+    D       tools/build-wheels-dev.sh
     M       tools/build-wheels.sh
+    D       tools/dev.py
     A       tools/install_cumm_cu128.bat
     A       tools/install_cumm_cu130.bat
     M       tools/install_windows_cuda.ps1
+    D       tools/linux_test_build.sh
     A       tools/msvc_setup.bat
     M       version.txt
     (END)

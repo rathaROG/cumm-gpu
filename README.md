@@ -13,7 +13,7 @@ pip uninstall -y cumm cumm-cu130 cumm-cu128 cumm-cu126 cumm-cu121
 For easy installation using prebuilt wheels (example for CUDA 13.0):
 
 ```bash
-pip install cumm-cu130 --extra-index-url https://ratharog.github.io/cumm-spconv/
+pip install --extra-index-url https://ratharog.github.io/cumm-spconv/ cumm-cu130
 ```
 
 See [ratharog.github.io/cumm-spconv](https://ratharog.github.io/cumm-spconv/) for prebuilt wheel info and supported CUDA versions.
