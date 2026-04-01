@@ -1,0 +1,40 @@
+Many files (including Python and non-Python files) have been added or modified by rathaROG in 2026.
+
+To see a full list of added and modified files, run in the git repository:
+    git diff --name-status 4c77b38d1ab57d5d1c157adddf67dad93f3a446b
+
+    (START)
+    D       .github/workflows/build.yaml
+    A       .github/workflows/build_legacy.yaml
+    D       CHANGELOG.md
+    A       CITATION.cff
+    D       CMakeLists.txt
+    D       LICENSE
+    M       MANIFEST.in
+    A       NOTICE
+    M       README.md
+    D       cmake/cummConfig.cmake.in
+    M       cumm/common.py
+    M       cumm/inliner/__init__.py
+    D       format_all.sh
+    M       include/tensorview/core/mp_helper.h
+    M       include/tensorview/core/nvrtc_std.h
+    M       include/tensorview/gemm/dtypes/bfloat16.h
+    M       include/tensorview/gemm/dtypes/float8.h
+    M       include/tensorview/gemm/dtypes/half.h
+    M       include/tensorview/gemm/dtypes/tf32.h
+    M       pyproject.toml
+    M       setup.py
+    D       tools/README.md
+    D       tools/build-wheels-dev.sh
+    M       tools/build-wheels.sh
+    D       tools/dev.py
+    M       tools/install_windows_cuda.ps1
+    D       tools/linux_test_build.sh
+    A       tools/msvc_setup.bat
+    D       tutorials/inline_cuda.ipynb
+    M       version.txt
+    (END)
+
+For more information on the changes, contact:
+    - rathaROG (https://github.com/rathaROG)

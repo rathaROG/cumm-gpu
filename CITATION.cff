@@ -1,0 +1,18 @@
+# This CITATION.cff file was generated with cffinit.
+
+cff-version: 1.2.0
+title: cumm-gpu
+message: >-
+  If you use this software or part(s) of it, please cite it
+  using the metadata from this file.
+type: software
+authors:
+  - given-names: Ratha
+    family-names: SIV
+identifiers:
+  - type: url
+    value: 'https://github.com/rathaROG/cumm-gpu.git'
+    description: Official GitHub repository
+repository-code: 'https://github.com/rathaROG/cumm-gpu'
+abstract: cumm-gpu  — A fork from cumm — CUDA Matrix Multiply library.
+license: Apache-2.0
