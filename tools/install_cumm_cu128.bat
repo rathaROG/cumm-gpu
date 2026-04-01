@@ -6,7 +6,7 @@ SET "PYTHONWARNINGS=ignore"
 RMDIR /s /q cumm-gpu >NUL 2>&1
 ECHO.
 ECHO [----------------------------------------------------------------------------------]
-ECHO [                  Install CUMM (CUDA 12.8) by rathaROG - v0.0.2                   ]
+ECHO [                  Install CUMM (CUDA 12.8) by rathaROG - v0.0.3                   ]
 ECHO [----------------------------------------------------------------------------------]
 ECHO.
 ECHO 🚨 You must manually install Microsoft Visual Studio 2019+ with C++ !
@@ -22,7 +22,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 ECHO [DONE] PyTorch installed. ✅
 ECHO.
 ECHO [INFO] Installing build requirements ...
-pip install -U pybind11 pccm ccimport ninja build wheel >NUL 2>&1
+pip install -U pybind11 pccm ccimport ninja build wheel nvidia-arch >NUL 2>&1
 ECHO [DONE] All build requirements installed. ✅
 ECHO.
 ECHO [INFO] Uninstalling existing cumm ...
