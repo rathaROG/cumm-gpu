@@ -1,3 +1,5 @@
+# Modified by rathaROG in 2026.
+
 import numpy as np 
 from cumm.gemm.layout_tensorop import rowmajor_inverse
 from cumm.inliner import NVRTCInlineBuilder
@@ -5,6 +7,7 @@ from cumm.common import TensorView, TensorViewCPU, TensorViewNVRTC, TensorViewNV
 from cumm import tensorview as tv
 import pccm 
 from ccimport import compat 
+
 def check_array_op_grad(inp: np.ndarray, out_shape: list[int], op: str, grad_op: str, delta: float = 1e-4):
     np.random.seed(50051)
 
@@ -44,7 +47,8 @@ def check_array_op_grad(inp: np.ndarray, out_shape: list[int], op: str, grad_op:
         auto grad_scale = $grad_scalar;
         auto inp_delta_val = $inp_delta;
 
-        tv::array_nd<float, {out_shape_str}> out_arr = inp_arr.op<op::{op}>() * grad_scale;
+        // tv::array_nd<float, {out_shape_str}> out_arr = inp_arr.op<op::{op}>() * grad_scale;
+        tv::array_nd<{dtype_str}, {out_shape_str}> out_arr = inp_arr.op<op::{op}>() * grad_scale;
         auto out_arr_with_delta = (inp_arr + inp_delta_val).op<op::{op}>() * grad_scale;
         auto out_arr_with_delta_sum = op::reshape<-1>(out_arr_with_delta - out_arr).op<op::sum>(); 
         $my_val_tv[i] = op::reshape<-1>(grad_scale.op<op::{grad_op}>(inp_arr))[$index];
@@ -130,5 +134,3 @@ def check_array_binary_op_grad(inp_list: list[np.ndarray], out_shape: list[int],
             print(f"------ {op}-{grad_ops[cur_inp_idx]}-{j} ------")
             print(my_val)
             print(ref_val)
-
-
