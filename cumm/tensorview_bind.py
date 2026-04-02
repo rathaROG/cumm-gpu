@@ -1,3 +1,5 @@
+# Modified by rathaROG in 2026.
+
 # Copyright 2024 Yan Yan
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +22,7 @@ import pccm
 from ccimport import compat
 from pccm.utils import project_is_editable, project_is_installed
 
-from cumm.common import CompileInfo, PyBind11, TensorView, TensorViewCPU, TensorViewCompileLinkFlags, TensorViewHeader, TensorViewImplFlags, get_cuda_version_by_nvcc, TensorViewArrayLinalg
+from cumm.common import CompileInfo, PyBind11, TensorView, TensorViewCPU, TensorViewCompileLinkFlags, TensorViewHeader, TensorViewImplFlags, get_cuda_lib_link_name_linux, get_cuda_version_by_nvcc, TensorViewArrayLinalg, _get_cuda_include_lib
 from cumm.constants import CUMM_CPU_ONLY_BUILD, PACKAGE_ROOT
 from .constants import CUMM_APPLE_METAL_CPP_ROOT, CUMM_CUDA_VERSION, PACKAGE_NAME
 from cumm.conv.nvrtc_code import nvrtc_conv_template
@@ -87,20 +89,25 @@ class TensorViewBind(pccm.Class, pccm.pybind.PybindClassMixin):
         if not CUMM_CPU_ONLY_BUILD and not compat.InMacOS:
             # cufilt (nv_decode.h) is used to demangle
             # c++ names in ptx.
-
+            nvrtc_lib_name = "nvrtc"
+            nvrtc_builtins_lib_name = "nvrtc-builtins"
+            if compat.InLinux:
+                _, lib = _get_cuda_include_lib()
+                nvrtc_lib_name = get_cuda_lib_link_name_linux(lib, "nvrtc")
+                nvrtc_builtins_lib_name = get_cuda_lib_link_name_linux(lib, "nvrtc-builtins")
             cuda_ver = get_cuda_version_by_nvcc().split(".")
             cuda_ver_ints = list(map(int, cuda_ver))
             if cuda_ver_ints >= [11, 4]:
                 # cuflit has problem in arm platforms and windows, so we remove it.
                 # self.add_include("nv_decode.h")
                 # self.build_meta.add_libraries("nvrtc", "cufilt")
-                self.build_meta.add_libraries("nvrtc")
+                self.build_meta.add_libraries(nvrtc_lib_name)
             else:
-                self.build_meta.add_libraries("nvrtc")
+                self.build_meta.add_libraries(nvrtc_lib_name)
             if compat.InLinux:
-                self.build_meta.add_ldflags("g++", "-Wl,--no-as-needed", "-lnvrtc-builtins")
-                self.build_meta.add_ldflags("clang++", "-Wl,--no-as-needed", "-lnvrtc-builtins")
-                self.build_meta.add_ldflags("nvcc", "-Wl,--no-as-needed", "-lnvrtc-builtins")
+                self.build_meta.add_ldflags("g++", "-Wl,--no-as-needed", f"-l{nvrtc_builtins_lib_name}")
+                self.build_meta.add_ldflags("clang++", "-Wl,--no-as-needed", f"-l{nvrtc_builtins_lib_name}")
+                self.build_meta.add_ldflags("nvcc", "-Wl,--no-as-needed", f"-l{nvrtc_builtins_lib_name}")
             if not compat.InWindows:
                 self.build_meta.add_libraries("dl")
             else:
