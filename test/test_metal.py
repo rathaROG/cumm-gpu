@@ -1,3 +1,5 @@
+# Modified by rathaROG in 2026.
+
 import pickle
 import time
 
@@ -9,14 +11,20 @@ from cumm.inliner import NVRTCInlineBuilder, torch_tensor_to_tv
 from cumm.common import TensorView, TensorViewCPU, TensorViewNVRTC, TensorViewNVRTCHashKernel, TensorViewArrayLinalg, TensorViewNVRTCDev, EigenLib
 import numpy as np
 from cumm import dtypes
-import pccm 
-import numba 
+import pccm
+import numba
+
+from ccimport import compat
+
 
 def test_metal_capture():
     """inliner for metal support small 1d/2d array capture (must smaller than 4x4)
     small capture is passed by func constants to get best performance.
     unlike nvrtc, only 4x4 or smaller matrix are allowed.
     """
+    if not compat.InMacOS:
+        print("Not in MacOS, skip metal capture test.")
+        return
     # init cuda
     data = torch.rand([1000, 3], dtype=torch.float32, device="mps")
     datares = torch.empty_like(data)
@@ -37,6 +45,9 @@ def test_metal_capture():
     assert torch.allclose(data_res_ref, datares, atol=1e-5)
 
 def test_metal_basic():
+    if not compat.InMacOS:
+        print("Not in MacOS, skip metal capture test.")
+        return
     # init cuda
     a = tv.zeros([100000, 3], tv.float32, 0)
     cnt = tv.zeros([1], tv.int32, 0)
@@ -72,6 +83,10 @@ def test_metal_basic():
     # mod = CummNVRTCModule([TensorViewNVRTCDev()], verbose=True)
 
 def test_metal_torch_cumm():
+    if not compat.InMacOS:
+        print("Not in MacOS, skip metal capture test.")
+        return
+
     th_ten = torch.rand(64, 4321).float().to("mps")
     th_ten2 = th_ten[1:]
     ref = th_ten2.cpu().numpy()
@@ -81,7 +96,10 @@ def test_metal_torch_cumm():
     print(np.linalg.norm(ref - my))
 
 
-def test_metal_hash():
+def test_metal_hash_old():
+    if not compat.InMacOS:
+        print("Not in MacOS, skip metal capture test.")
+        return
     keys_np = np.random.randint(0, 10, size=(2500)).astype(np.int32)
     # we still need to use .cuda to make code compatabile with cuda
     keys = tv.from_numpy(keys_np).cuda()
@@ -201,8 +219,10 @@ def _template_test_metal_hash(is_u64: bool, num: int = 25000):
     assert np.allclose(res, acc_values.cpu().numpy(), atol=1e-5)
 
 def test_metal_hash():
+    if not compat.InMacOS:
+        print("Not in MacOS, skip metal capture test.")
+        return
     _template_test_metal_hash(False)
-
     _template_test_metal_hash(True)
 
 if __name__ == "__main__":
