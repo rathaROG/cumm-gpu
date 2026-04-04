@@ -5,7 +5,7 @@ To see a full list of added and modified files, run in the git repository:
 
     (START)
     D       .github/workflows/build.yaml
-    A       .github/workflows/build_legacy.yaml
+    A       .github/workflows/build_legacy_gpu.yaml
     D       CHANGELOG.md
     A       CITATION.cff
     D       CMakeLists.txt
@@ -14,8 +14,10 @@ To see a full list of added and modified files, run in the git repository:
     A       NOTICE
     M       README.md
     D       cmake/cummConfig.cmake.in
+    M       cumm/__init__.py
     M       cumm/common.py
     M       cumm/inliner/__init__.py
+    M       cumm/utils/array_grad_check.py
     D       format_all.sh
     M       include/tensorview/core/mp_helper.h
     M       include/tensorview/core/nvrtc_std.h
@@ -25,6 +27,7 @@ To see a full list of added and modified files, run in the git repository:
     M       include/tensorview/gemm/dtypes/tf32.h
     M       pyproject.toml
     M       setup.py
+    M       test/test_metal.py
     D       tools/README.md
     D       tools/build-wheels-dev.sh
     M       tools/build-wheels.sh
