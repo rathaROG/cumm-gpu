@@ -1,0 +1,238 @@
+name: build main cpu
+
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+
+jobs:
+
+
+  linux-intel-legacy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          docker system prune -af
+      - uses: actions/checkout@v6
+        with:
+          ref: legacy
+      - name: Build wheel CPU
+        env:
+          BUILD_IMAGE: ratharog/manylinux_2_28_x86_64:cu130
+          BUILD_PYTHON_VERSIONS: "['${{ matrix.python-version }}']"
+        run: |
+          docker run --rm \
+            -e CUMM_CUDA_VERSION="" \
+            -e BUILD_PYTHON_VERSIONS="$BUILD_PYTHON_VERSIONS" \
+            -v "$(pwd)":/io \
+            $BUILD_IMAGE \
+            bash -c "source /etc/bashrc && /io/tools/build-wheels.sh"
+      - name: Archive wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-intel-py${{ matrix.python-version }}-legacy
+          path: dist/*.whl
+
+  linux-intel:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          docker system prune -af
+      - uses: actions/checkout@v6
+      - name: Build wheel CPU
+        env:
+          BUILD_IMAGE: ratharog/manylinux_2_28_x86_64:cu130
+          BUILD_PYTHON_VERSIONS: "['${{ matrix.python-version }}']"
+        run: |
+          docker run --rm \
+            -e CUMM_CUDA_VERSION="" \
+            -e BUILD_PYTHON_VERSIONS="$BUILD_PYTHON_VERSIONS" \
+            -v "$(pwd)":/io \
+            $BUILD_IMAGE \
+            bash -c "source /etc/bashrc && /io/tools/build-wheels.sh"
+      - name: Archive wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-intel-py${{ matrix.python-version }}
+          path: dist/*.whl
+
+  windows-intel-legacy:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'] 
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: legacy
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install pep build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build wheel setuptools
+      - name: Build wheel
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+          CUMM_CUDA_VERSION: ''
+        run: |
+          # if we use $env to set a var with empty string, this env will be deteted. f**k windows x2 !
+          $env:CUMM_DISABLE_JIT = "1"
+          python -m pip install pccm pybind11
+          python -m build --skip-dependency-check --wheel --outdir dist/ .
+        shell: powershell
+      - name: Archive wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-intel-py${{ matrix.python-version }}-legacy
+          path: dist/*.whl
+
+  windows-intel:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'] 
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install pep build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build wheel setuptools
+      - name: Build wheel
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+          CUMM_CUDA_VERSION: ''
+        run: |
+          # if we use $env to set a var with empty string, this env will be deteted. f**k windows x2 !
+          $env:CUMM_DISABLE_JIT = "1"
+          python -m pip install pccm pybind11
+          python -m build --skip-dependency-check --wheel --outdir dist/ .
+        shell: powershell
+      - name: Archive wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-intel-py${{ matrix.python-version }}
+          path: dist/*.whl
+
+  macos-arm-legacy:
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'] 
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: legacy
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pep build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build wheel setuptools
+      - name: Build CPU wheel
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          # Auto-detect macOS version and architecture
+          MACOS_VER=$(sw_vers -productVersion | awk -F. '{print $1"."$2}')
+          ARCH=$(uname -m)
+          export _PYTHON_HOST_PLATFORM="macosx-${MACOS_VER}-${ARCH}"
+          export MACOSX_DEPLOYMENT_TARGET="${MACOS_VER}"
+          echo "Using _PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}"
+          echo "Using MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}"
+          export CUMM_DISABLE_JIT="1"
+          git clone https://github.com/bkaradzic/metal-cpp.git
+          export CUMM_APPLE_METAL_CPP_ROOT=$PWD/metal-cpp
+          pip install pccm pybind11
+          python -m build --skip-dependency-check --wheel --outdir dist/ .
+      - name: Delocate macOS wheel
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          pip install delocate
+          delocate-wheel dist/*.whl
+      - name: Archive wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-arm-py${{ matrix.python-version }}-legacy
+          path: dist/*.whl
+
+  macos-arm:
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'] 
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pep build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build wheel setuptools
+      - name: Build CPU wheel
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          # Auto-detect macOS version and architecture
+          MACOS_VER=$(sw_vers -productVersion | awk -F. '{print $1"."$2}')
+          ARCH=$(uname -m)
+          export _PYTHON_HOST_PLATFORM="macosx-${MACOS_VER}-${ARCH}"
+          export MACOSX_DEPLOYMENT_TARGET="${MACOS_VER}"
+          echo "Using _PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}"
+          echo "Using MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}"
+          export CUMM_DISABLE_JIT="1"
+          git clone https://github.com/bkaradzic/metal-cpp.git
+          export CUMM_APPLE_METAL_CPP_ROOT=$PWD/metal-cpp
+          pip install pccm pybind11
+          python -m build --skip-dependency-check --wheel --outdir dist/ .
+      - name: Delocate macOS wheel
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          pip install delocate
+          delocate-wheel dist/*.whl
+      - name: Archive wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-arm-py${{ matrix.python-version }}
+          path: dist/*.whl

@@ -33,7 +33,7 @@ if cuda_ver is not None and cuda_ver != "":
 DESCRIPTION = 'CUDA matrix multiply library'
 URL = 'https://github.com/rathaROG/cumm-gpu'
 AUTHOR = 'rathaROG'
-REQUIRES_PYTHON = '>=3.11'
+REQUIRES_PYTHON = '>=3.9'
 VERSION = None
 
 REQUIRED = [
@@ -188,6 +188,8 @@ setup(
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
